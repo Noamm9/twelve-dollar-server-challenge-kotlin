@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(ktorLibs.plugins.ktor)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.graalvm.native)
 }
 
 group = "dev.noamm9.velox"
@@ -17,13 +16,11 @@ kotlin {
     jvmToolchain(25)
 }
 
-graalvmNative {
-    binaries.named("main") {
-        imageName.set(rootProject.name)
-        mainClass.set(application.mainClass)
-        buildArgs.add("-J-Xmx1100m")
-    }
+// pulled in by Ktor but unused here; without it typeOf() stays in the stdlib and the native image analyses far less code
+configurations.runtimeClasspath {
+    exclude(group = "org.jetbrains.kotlin", module = "kotlin-reflect")
 }
+
 dependencies {
     implementation(ktorLibs.serialization.kotlinx.json)
     implementation(ktorLibs.server.cio)
@@ -31,7 +28,7 @@ dependencies {
     implementation(ktorLibs.server.core)
     implementation(ktorLibs.server.statusPages)
 
-    implementation(libs.logback.classic)
+    implementation(libs.slf4j.simple)
 
     implementation(libs.dotenv)
 
