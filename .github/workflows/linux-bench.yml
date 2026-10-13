@@ -14,13 +14,18 @@ jobs:
       - uses: actions/checkout@v4
       - name: seed
         run: sudo apt-get update -qq && sudo apt-get install -y -qq sqlite3 && bash seed/make-seed.sh
-      - name: build both runtimes with install.sh + build.sh in ubuntu:24.04
+      - name: build both runtimes with install.sh + build.sh in a 1 CPU / 1700 MB / no-swap ubuntu:24.04 container
         run: |
-          docker run --name build -v "$PWD":/repo -w /repo ubuntu:24.04 bash -c '
+          docker run --name build --cpuset-cpus=0 --cpus=1 --memory=1700m --memory-swap=1700m \
+            -v "$PWD":/repo -w /repo ubuntu:24.04 bash -c '
             set -euo pipefail
             apt-get update -qq && apt-get install -y -qq curl >/dev/null
             bash submissions/kotlin-ktor-graalvm-noamm9/install.sh >/dev/null
-            bash submissions/kotlin-ktor-graalvm-noamm9/build.sh 2>&1 | grep -E "Finished generating|Peak RSS|BUILD"'
+            /opt/graalvm/bin/java -version 2>&1 | head -2
+            start=$(date +%s)
+            bash submissions/kotlin-ktor-graalvm-noamm9/build.sh 2>&1 | grep -E "Garbage collector|Optimization level|Target machine|Finished generating|Peak RSS|BUILD|out of memory|Error"
+            echo "build took $(( $(date +%s) - start ))s"
+            grep oom_kill /sys/fs/cgroup/memory.events'
           docker commit build box >/dev/null
           ls -la submissions/kotlin-ktor-graalvm-noamm9/build/native/nativeCompile submissions/kotlin-ktor-graalvm-noamm9/build/install/velox/lib | head -5
       - name: k6

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-GRAALVM_URL="https://github.com/graalvm/graalvm-ce-builds/releases/download/graal-25.4.4.1.1/graalvm-community-jdk-25i4-25.0.4.1.1_linux-x64_bin.tar.gz"
-GRAALVM_SHA256="05ccbbe783210b6886ff7b08fcd0b061c5dce4852b05db87284fc0e24abb08e2"
+GRAALVM_URL="https://download.oracle.com/graalvm/25/archive/graalvm-jdk-25.0.4_linux-x64_bin.tar.gz"
+GRAALVM_SHA256="76007c309f821aaf435bce63162ea0395587fc77350801c81643fe7feea37276"
 
 apt-get update
 apt-get install -y build-essential zlib1g-dev curl ca-certificates
