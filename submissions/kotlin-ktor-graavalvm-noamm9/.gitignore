@@ -5,3 +5,6 @@ build
 
 # Ignore Kotlin plugin data
 .kotlin
+
+# Ignore local SQLite database
+sqlite.db*
