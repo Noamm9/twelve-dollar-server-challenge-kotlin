@@ -8,7 +8,6 @@ import io.ktor.server.engine.*
 
 fun main() {
     embeddedServer(factory = CIO, host = HOST, port = PORT, module = {
-        configureAuthentication()
         configureDatabase()
         configureSerialization()
         configureStatusPages()

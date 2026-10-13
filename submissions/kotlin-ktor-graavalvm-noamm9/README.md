@@ -7,7 +7,7 @@
 | Framework           | Ktor 3.6.0                                                                                                                                                |
 | Server              | Ktor CIO                                                                                                                                                  |
 | SQLite driver       | xerial sqlite-jdbc 3.53.4.0                                                                                                                               |
-| Connection pool     | HikariCP 7.1.0                                                                                                                                            |
+| Connection pool     | Own coroutine pool (`Channel`) of 10 connections with reused prepared statements                                                                          |
 | JSON                | kotlinx.serialization through Ktor content negotiation                                                                                                    |
 | **Nginx or direct** | **Direct preferred**: serves `0.0.0.0:80` when configured that way;<br>But can be tested over Nginx too by changing `PORT` environment variable to `3000` |
 
@@ -45,18 +45,19 @@ Defaults are provided only for local development.
 build/native/nativeCompile/velox
 ```
 
-Reflection used by Hikari, logback, java-jwt (Jackson) and kotlinx.serialization is registered in `src/main/resources/META-INF/native-image/dev.noamm9.velox/velox/reachability-metadata.json`, generated with the GraalVM tracing agent while running `test/test.sh`. A new `@Serializable` response class needs its `Companion` field and `Companion.serializer()` added there.
+Reflection used by logback and kotlinx.serialization is registered in `src/main/resources/META-INF/native-image/dev.noamm9.velox/velox/reachability-metadata.json`, generated with the GraalVM tracing agent while running `test/test.sh`. A new `@Serializable` response class needs its `Companion` field and `Companion.serializer()` added there.
 
 ## Optimizations, and why
 
 - **Direct mode preferred.** The app can bind to `0.0.0.0:80` when the benchmark environment provides the required capability. This avoids spending CPU on Nginx on a one-vCPU machine. For development, `PORT=3000` can be used to avoid privileged-port binding issues.
 - **GraalVM native image.** No JIT warm-up and a much smaller memory footprint than the JVM, which leaves more of the 2 GB for SQLite's page cache and connections.
 - **Ktor CIO.** CIO is a coroutine-based HTTP engine and keeps the stack simple without an external servlet container.
-- **SQLite through JDBC with HikariCP.** Connections are reused instead of opening a new SQLite connection from scratch for every request.
-- **SQLite pragmas set on connections.** The app enables WAL mode, `synchronous=NORMAL`, a busy timeout, mmap, a larger page cache, and in-memory temporary storage. WAL plus `synchronous=NORMAL` keeps writes durable enough for the challenge rules while improving read/write behavior.
+- **Own SQLite connection pool with reused prepared statements.** 10 connections are opened at startup and handed out through a coroutine `Channel`, so waiting for a connection suspends instead of blocking a thread. Each connection prepares every query once and reuses it, which skips SQL parsing and planning on every request (allowed: it caches the plan, not the data).
+- **SQLite pragmas set on connections.** Each pragma runs as its own statement (sqlite-jdbc ignores everything after the first statement in one string). The app enables WAL mode, `synchronous=NORMAL`, a busy timeout, mmap, a larger page cache, and in-memory temporary storage. WAL plus `synchronous=NORMAL` keeps writes durable enough for the challenge rules while improving read/write behavior.
 - **Reference-style SQL.** Feed and post reads use the challenge's join plus per-post like-count query shape. Post creation uses `INSERT ... RETURNING`. Likes use one insert statement with `ON CONFLICT DO NOTHING`, followed by a post-existence check only when needed to distinguish an existing like from a missing post.
 - **No cross-request response cache.** Requests read from SQLite while being served. Prepared statements and SQLite's own page cache are the only caching-like behavior used.
-- **JWT auth uses Ktor's JWT support.** Tokens are verified on authenticated requests using the configured `JWT_SECRET`; token results are not cached across requests.
+- **Hand-rolled HS256 JWT verification.** Signature (constant-time compare), `alg`, `exp`, `nbf` and `iat` are checked with `javax.crypto` and kotlinx.serialization instead of java-jwt, which removes Jackson and the Ktor auth plugins. Every token is verified on every request; nothing is cached.
+- **INFO-level logging.** `logback.xml` keeps logback from defaulting to DEBUG, so nothing is logged per request.
 - **Compact JSON via kotlinx.serialization.** Response objects are serialized by Ktor content negotiation with stable field order from the Kotlin serializable models.
 
 ## License

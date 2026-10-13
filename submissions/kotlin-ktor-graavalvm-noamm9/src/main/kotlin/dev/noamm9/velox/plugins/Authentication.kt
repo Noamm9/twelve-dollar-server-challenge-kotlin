@@ -1,64 +1,69 @@
 package dev.noamm9.velox.plugins
 
-import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
-import com.auth0.jwt.exceptions.JWTVerificationException
 import dev.noamm9.velox.utils.JWT_SECRET
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.Application
-import io.ktor.server.application.install
-import io.ktor.server.auth.Authentication
-import io.ktor.server.auth.jwt.JWTPrincipal
-import io.ktor.server.auth.jwt.jwt
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.response.respond
+import kotlinx.serialization.json.*
+import java.security.MessageDigest
+import java.util.Base64
+import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
 
-fun Application.configureAuthentication() {
-    install(Authentication) {
-        val verifier = JWT.require(Algorithm.HMAC256(JWT_SECRET)).build()
+sealed interface AuthResult {
+    data class Authenticated(val userId: Int, val username: String) : AuthResult
+    data class Rejected(val error: String) : AuthResult
+}
 
-        jwt {
-            verifier(verifier)
+class JwtVerifier(secret: String) {
+    private val key = SecretKeySpec(secret.toByteArray(), "HmacSHA256")
+    private val mac = ThreadLocal.withInitial { Mac.getInstance("HmacSHA256").apply { init(key) } }
+    private val decoder = Base64.getUrlDecoder()
 
-            validate { credential ->
-                val payload = credential.payload
-                val subject = payload.subject ?: return@validate null
+    fun verify(authorization: String?): AuthResult {
+        if (authorization == null || ! authorization.startsWith("Bearer ")) return AuthResult.Rejected("missing bearer token")
 
-                subject.toLongOrNull()?.takeIf { it > 0 } ?: return@validate null
-                payload.getClaim("username").asString() ?: return@validate null
+        val payload = runCatching { verifiedPayload(authorization.removePrefix("Bearer ")) }.getOrNull()
+            ?: return AuthResult.Rejected("invalid or expired token")
 
-                JWTPrincipal(payload)
-            }
+        val userId = payload.string("sub")?.toIntOrNull()?.takeIf { it > 0 } ?: return AuthResult.Rejected("invalid token payload")
+        val username = payload.string("username") ?: return AuthResult.Rejected("invalid token payload")
 
-            challenge { _, _ ->
-                val authorization = call.request.headers[HttpHeaders.Authorization]
+        return AuthResult.Authenticated(userId, username)
+    }
 
-                if (authorization == null || ! authorization.startsWith("Bearer ")) {
-                    return@challenge call.respond(
-                        status = HttpStatusCode.Unauthorized, message = mapOf("error" to "missing bearer token")
-                    )
-                }
+    private fun verifiedPayload(token: String): JsonObject? {
+        val parts = token.split('.')
+        if (parts.size != 3) return null
 
-                val message = try {
-                    val decoded = verifier.verify(authorization.removePrefix("Bearer "))
+        val header = Json.parseToJsonElement(decoder.decode(parts[0]).decodeToString()).jsonObject
+        if (header.string("alg") != "HS256") return null
 
-                    val subject = decoded.subject
-                    val username = decoded.getClaim("username").asString()
+        val signature = mac.get().doFinal("${parts[0]}.${parts[1]}".toByteArray())
+        if (! MessageDigest.isEqual(signature, decoder.decode(parts[2]))) return null
 
-                    when {
-                        subject == null || subject.toLongOrNull()?.takeIf { it > 0 } == null || username == null -> "invalid token payload"
-                        else -> "invalid or expired token"
-                    }
-                }
-                catch (_: JWTVerificationException) {
-                    "invalid or expired token"
-                }
-                catch (_: IllegalArgumentException) {
-                    "invalid or expired token"
-                }
+        val payload = Json.parseToJsonElement(decoder.decode(parts[1]).decodeToString()).jsonObject
+        val now = System.currentTimeMillis() / 1000
 
-                call.respond(status = HttpStatusCode.Unauthorized, message = mapOf("error" to message))
-            }
+        // same time checks java-jwt did: exp in the past, nbf or iat in the future
+        if (payload["exp"]?.jsonPrimitive?.long?.let { now > it } == true) return null
+        if (payload["nbf"]?.jsonPrimitive?.long?.let { now < it } == true) return null
+        if (payload["iat"]?.jsonPrimitive?.long?.let { now < it } == true) return null
+
+        return payload
+    }
+
+    private fun JsonObject.string(name: String) = (get(name) as? JsonPrimitive)?.takeIf { it.isString }?.content
+}
+
+private val verifier = JwtVerifier(JWT_SECRET)
+
+suspend fun ApplicationCall.authenticate(): AuthResult.Authenticated? =
+    when (val result = verifier.verify(request.headers[HttpHeaders.Authorization])) {
+        is AuthResult.Authenticated -> result
+        is AuthResult.Rejected -> {
+            respond(status = HttpStatusCode.Unauthorized, message = mapOf("error" to result.error))
+            null
         }
     }
-}

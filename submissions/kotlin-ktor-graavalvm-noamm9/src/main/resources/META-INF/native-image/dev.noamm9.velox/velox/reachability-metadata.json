@@ -1,7 +1,7 @@
 {
   "reflection": [
     {
-      "type": "ch.qos.logback.classic.BasicConfigurator",
+      "type": "ch.qos.logback.classic.encoder.PatternLayoutEncoder",
       "methods": [
         {
           "name": "<init>",
@@ -22,16 +22,52 @@
       ]
     },
     {
-      "type": "com.fasterxml.jackson.databind.deser.Deserializers[]"
-    },
-    {
-      "type": "com.fasterxml.jackson.databind.ext.Java7SupportImpl",
+      "type": "ch.qos.logback.core.ConsoleAppender",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": []
         }
       ]
+    },
+    {
+      "type": "ch.qos.logback.core.OutputStreamAppender",
+      "methods": [
+        {
+          "name": "setEncoder",
+          "parameterTypes": [
+            "ch.qos.logback.core.encoder.Encoder"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "ch.qos.logback.core.encoder.Encoder"
+    },
+    {
+      "type": "ch.qos.logback.core.encoder.LayoutWrappingEncoder",
+      "methods": [
+        {
+          "name": "setParent",
+          "parameterTypes": [
+            "ch.qos.logback.core.spi.ContextAware"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "ch.qos.logback.core.pattern.PatternLayoutEncoderBase",
+      "methods": [
+        {
+          "name": "setPattern",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "ch.qos.logback.core.spi.ContextAware"
     },
     {
       "type": "com.sun.crypto.provider.HmacCore$HmacSHA256",
@@ -43,293 +79,13 @@
       ]
     },
     {
-      "type": "com.zaxxer.hikari.HikariConfig",
-      "fields": [
-        {
-          "name": "catalog"
-        },
-        {
-          "name": "connectionInitSql"
-        },
-        {
-          "name": "connectionTestQuery"
-        },
-        {
-          "name": "connectionTimeout"
-        },
-        {
-          "name": "credentials"
-        },
-        {
-          "name": "credentialsProvider"
-        },
-        {
-          "name": "credentialsProviderClassName"
-        },
-        {
-          "name": "dataSource"
-        },
-        {
-          "name": "dataSourceClassName"
-        },
-        {
-          "name": "dataSourceJndiName"
-        },
-        {
-          "name": "dataSourceProperties"
-        },
-        {
-          "name": "driverClassName"
-        },
-        {
-          "name": "exceptionOverride"
-        },
-        {
-          "name": "exceptionOverrideClassName"
-        },
-        {
-          "name": "healthCheckProperties"
-        },
-        {
-          "name": "healthCheckRegistry"
-        },
-        {
-          "name": "idleTimeout"
-        },
-        {
-          "name": "initializationFailTimeout"
-        },
-        {
-          "name": "isAllowPoolSuspension"
-        },
-        {
-          "name": "isAutoCommit"
-        },
-        {
-          "name": "isIsolateInternalQueries"
-        },
-        {
-          "name": "isReadOnly"
-        },
-        {
-          "name": "isRegisterMbeans"
-        },
-        {
-          "name": "jdbcUrl"
-        },
-        {
-          "name": "keepaliveTime"
-        },
-        {
-          "name": "leakDetectionThreshold"
-        },
-        {
-          "name": "maxLifetime"
-        },
-        {
-          "name": "maxPoolSize"
-        },
-        {
-          "name": "metricRegistry"
-        },
-        {
-          "name": "metricsTrackerFactory"
-        },
-        {
-          "name": "minIdle"
-        },
-        {
-          "name": "poolName"
-        },
-        {
-          "name": "scheduledExecutor"
-        },
-        {
-          "name": "schema"
-        },
-        {
-          "name": "sealed"
-        },
-        {
-          "name": "threadFactory"
-        },
-        {
-          "name": "transactionIsolationName"
-        },
-        {
-          "name": "unitTest"
-        },
-        {
-          "name": "validationTimeout"
-        }
-      ],
+      "type": "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl",
       "methods": [
         {
-          "name": "getCatalog",
-          "parameterTypes": []
-        },
-        {
-          "name": "getConnectionInitSql",
-          "parameterTypes": []
-        },
-        {
-          "name": "getConnectionTestQuery",
-          "parameterTypes": []
-        },
-        {
-          "name": "getConnectionTimeout",
-          "parameterTypes": []
-        },
-        {
-          "name": "getCredentials",
-          "parameterTypes": []
-        },
-        {
-          "name": "getCredentialsProvider",
-          "parameterTypes": []
-        },
-        {
-          "name": "getCredentialsProviderClassName",
-          "parameterTypes": []
-        },
-        {
-          "name": "getDataSource",
-          "parameterTypes": []
-        },
-        {
-          "name": "getDataSourceClassName",
-          "parameterTypes": []
-        },
-        {
-          "name": "getDataSourceJNDI",
-          "parameterTypes": []
-        },
-        {
-          "name": "getDataSourceProperties",
-          "parameterTypes": []
-        },
-        {
-          "name": "getDriverClassName",
-          "parameterTypes": []
-        },
-        {
-          "name": "getExceptionOverride",
-          "parameterTypes": []
-        },
-        {
-          "name": "getExceptionOverrideClassName",
-          "parameterTypes": []
-        },
-        {
-          "name": "getHealthCheckProperties",
-          "parameterTypes": []
-        },
-        {
-          "name": "getHealthCheckRegistry",
-          "parameterTypes": []
-        },
-        {
-          "name": "getIdleTimeout",
-          "parameterTypes": []
-        },
-        {
-          "name": "getInitializationFailTimeout",
-          "parameterTypes": []
-        },
-        {
-          "name": "getJdbcUrl",
-          "parameterTypes": []
-        },
-        {
-          "name": "getKeepaliveTime",
-          "parameterTypes": []
-        },
-        {
-          "name": "getLeakDetectionThreshold",
-          "parameterTypes": []
-        },
-        {
-          "name": "getMaxLifetime",
-          "parameterTypes": []
-        },
-        {
-          "name": "getMaximumPoolSize",
-          "parameterTypes": []
-        },
-        {
-          "name": "getMetricRegistry",
-          "parameterTypes": []
-        },
-        {
-          "name": "getMetricsTrackerFactory",
-          "parameterTypes": []
-        },
-        {
-          "name": "getMinimumIdle",
-          "parameterTypes": []
-        },
-        {
-          "name": "getPassword",
-          "parameterTypes": []
-        },
-        {
-          "name": "getPoolName",
-          "parameterTypes": []
-        },
-        {
-          "name": "getScheduledExecutor",
-          "parameterTypes": []
-        },
-        {
-          "name": "getSchema",
-          "parameterTypes": []
-        },
-        {
-          "name": "getThreadFactory",
-          "parameterTypes": []
-        },
-        {
-          "name": "getTransactionIsolation",
-          "parameterTypes": []
-        },
-        {
-          "name": "getUsername",
-          "parameterTypes": []
-        },
-        {
-          "name": "getValidationTimeout",
-          "parameterTypes": []
-        },
-        {
-          "name": "isAllowPoolSuspension",
-          "parameterTypes": []
-        },
-        {
-          "name": "isAutoCommit",
-          "parameterTypes": []
-        },
-        {
-          "name": "isIsolateInternalQueries",
-          "parameterTypes": []
-        },
-        {
-          "name": "isReadOnly",
-          "parameterTypes": []
-        },
-        {
-          "name": "isRegisterMbeans",
+          "name": "<init>",
           "parameterTypes": []
         }
       ]
-    },
-    {
-      "type": "com.zaxxer.hikari.pool.PoolBase"
-    },
-    {
-      "type": "com.zaxxer.hikari.pool.PoolEntry"
-    },
-    {
-      "type": "com.zaxxer.hikari.util.ConcurrentBag$IConcurrentBagEntry[]"
     },
     {
       "type": "dev.noamm9.velox.plugins.CreatedPost",
@@ -456,15 +212,6 @@
       "type": "io.ktor.server.application.PluginInstance"
     },
     {
-      "type": "io.ktor.server.auth.AuthenticateProvidersRegistration"
-    },
-    {
-      "type": "io.ktor.server.auth.Authentication"
-    },
-    {
-      "type": "io.ktor.server.auth.AuthenticationContext"
-    },
-    {
       "type": "io.ktor.server.engine.BaseApplicationResponse"
     },
     {
@@ -507,10 +254,6 @@
       "type": "java.lang.Class",
       "methods": [
         {
-          "name": "isRecord",
-          "parameterTypes": []
-        },
-        {
           "name": "isSealed",
           "parameterTypes": []
         }
@@ -523,25 +266,10 @@
       "type": "java.lang.String"
     },
     {
-      "type": "java.lang.Thread",
-      "methods": [
-        {
-          "name": "isVirtual",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
       "type": "java.net.StandardSocketOptions"
     },
     {
-      "type": "java.sql.Statement[]"
-    },
-    {
       "type": "kotlin.Any"
-    },
-    {
-      "type": "kotlin.ByteArray"
     },
     {
       "type": "kotlin.Cloneable"
@@ -722,13 +450,6 @@
           "parameterTypes": []
         }
       ]
-    },
-    {
-      "type": {
-        "proxy": [
-          "java.sql.Connection"
-        ]
-      }
     }
   ],
   "resources": [
@@ -755,6 +476,9 @@
     },
     {
       "glob": "META-INF/services/java.time.zone.ZoneRulesProvider"
+    },
+    {
+      "glob": "META-INF/services/javax.xml.parsers.SAXParserFactory"
     },
     {
       "glob": "META-INF/services/kotlin.reflect.jvm.internal.impl.km.internal.extensions.MetadataExtensions"

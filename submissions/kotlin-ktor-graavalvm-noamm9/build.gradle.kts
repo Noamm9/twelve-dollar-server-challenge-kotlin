@@ -25,8 +25,6 @@ graalvmNative {
 }
 dependencies {
     implementation(ktorLibs.serialization.kotlinx.json)
-    implementation(ktorLibs.server.auth)
-    implementation(ktorLibs.server.auth.jwt)
     implementation(ktorLibs.server.cio)
     implementation(ktorLibs.server.contentNegotiation)
     implementation(ktorLibs.server.core)
@@ -36,6 +34,5 @@ dependencies {
 
     implementation(libs.dotenv)
 
-    implementation(libs.hikari)
     implementation(libs.sqlite)
 }

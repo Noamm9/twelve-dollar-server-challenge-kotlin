@@ -2,9 +2,6 @@ package dev.noamm9.velox.routing
 
 import dev.noamm9.velox.plugins.*
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.auth.authenticate
-import io.ktor.server.auth.jwt.JWTPrincipal
-import io.ktor.server.auth.principal
 import io.ktor.server.request.receiveText
 import io.ktor.server.response.respond
 import io.ktor.server.routing.*
@@ -39,109 +36,86 @@ fun Route.postsRoute() {
             }
         }
 
-        authenticate {
-            post {
-                val principal = call.principal<JWTPrincipal>() ?: return@post call.respond(
-                    status = HttpStatusCode.Unauthorized,
-                    message = mapOf("error" to "invalid token payload")
+        post {
+            val user = call.authenticate() ?: return@post
+
+            val json = try {
+                Json.parseToJsonElement(call.receiveText())
+            }
+            catch (_: SerializationException) {
+                return@post call.respond(
+                    status = HttpStatusCode.BadRequest,
+                    message = mapOf("error" to "malformed JSON body")
                 )
-
-                val userId = principal.payload.subject.toIntOrNull() ?: return@post call.respond(
-                    status = HttpStatusCode.Unauthorized,
-                    message = mapOf("error" to "invalid token payload")
+            }
+            catch (_: IllegalArgumentException) {
+                return@post call.respond(
+                    status = HttpStatusCode.BadRequest,
+                    message = mapOf("error" to "malformed JSON body")
                 )
+            }
 
-                val username = principal.payload.getClaim("username").asString() ?: return@post call.respond(
-                    status = HttpStatusCode.Unauthorized,
-                    message = mapOf("error" to "invalid token payload")
-                )
-
-                val json = try {
-                    Json.parseToJsonElement(call.receiveText())
-                }
-                catch (_: SerializationException) {
-                    return@post call.respond(
-                        status = HttpStatusCode.BadRequest,
-                        message = mapOf("error" to "malformed JSON body")
-                    )
-                }
-                catch (_: IllegalArgumentException) {
-                    return@post call.respond(
-                        status = HttpStatusCode.BadRequest,
-                        message = mapOf("error" to "malformed JSON body")
-                    )
-                }
-
-                val body =
-                    ((json as? JsonObject)?.get("body") as? JsonPrimitive)?.takeIf { it.isString }?.jsonPrimitive?.content?.trimJsWhitespace()
-                        ?: return@post call.respond(
-                            status = HttpStatusCode.BadRequest,
-                            message = mapOf("error" to "body is required")
-                        )
-
-                if (body.isEmpty()) {
-                    return@post call.respond(
+            val body =
+                ((json as? JsonObject)?.get("body") as? JsonPrimitive)?.takeIf { it.isString }?.jsonPrimitive?.content?.trimJsWhitespace()
+                    ?: return@post call.respond(
                         status = HttpStatusCode.BadRequest,
                         message = mapOf("error" to "body is required")
                     )
-                }
 
-                if (body.length > 500) {
-                    return@post call.respond(
-                        status = HttpStatusCode.BadRequest,
-                        message = mapOf("error" to "body must be at most 500 characters")
-                    )
-                }
-
-                insertPost(userId, username, body).onSuccess { post ->
-                    call.respond(
-                        status = HttpStatusCode.Created,
-                        message = mapOf("post" to post)
-                    )
-                }.onFailure {
-                    call.respond(
-                        status = HttpStatusCode.InternalServerError,
-                        message = mapOf("error" to "internal server error")
-                    )
-                }
+            if (body.isEmpty()) {
+                return@post call.respond(
+                    status = HttpStatusCode.BadRequest,
+                    message = mapOf("error" to "body is required")
+                )
             }
 
-            post("{id}/like") {
-                val principal = call.principal<JWTPrincipal>() ?: return@post call.respond(
-                    status = HttpStatusCode.Unauthorized,
-                    message = mapOf("error" to "invalid token payload")
-                )
-
-                val userId = principal.payload.subject.toIntOrNull() ?: return@post call.respond(
-                    status = HttpStatusCode.Unauthorized,
-                    message = mapOf("error" to "invalid token payload")
-                )
-
-                val postId = parsePostId(call.pathParameters["id"]) ?: return@post call.respond(
+            if (body.length > 500) {
+                return@post call.respond(
                     status = HttpStatusCode.BadRequest,
-                    message = mapOf("error" to "invalid post id")
+                    message = mapOf("error" to "body must be at most 500 characters")
                 )
+            }
 
-                insertLike(userId, postId).onSuccess { result ->
-                    when (result) {
-                        null -> call.respond(
-                            status = HttpStatusCode.NotFound,
-                            message = mapOf("error" to "post not found")
-                        )
+            insertPost(user.userId, user.username, body).onSuccess { post ->
+                call.respond(
+                    status = HttpStatusCode.Created,
+                    message = mapOf("post" to post)
+                )
+            }.onFailure {
+                call.respond(
+                    status = HttpStatusCode.InternalServerError,
+                    message = mapOf("error" to "internal server error")
+                )
+            }
+        }
 
-                        else -> call.respond(
-                            status = when {
-                                result.alreadyLiked -> HttpStatusCode.OK
-                                else -> HttpStatusCode.Created
-                            }, message = result
-                        )
-                    }
-                }.onFailure {
-                    call.respond(
-                        status = HttpStatusCode.InternalServerError,
-                        message = mapOf("error" to "internal server error")
+        post("{id}/like") {
+            val user = call.authenticate() ?: return@post
+
+            val postId = parsePostId(call.pathParameters["id"]) ?: return@post call.respond(
+                status = HttpStatusCode.BadRequest,
+                message = mapOf("error" to "invalid post id")
+            )
+
+            insertLike(user.userId, postId).onSuccess { result ->
+                when (result) {
+                    null -> call.respond(
+                        status = HttpStatusCode.NotFound,
+                        message = mapOf("error" to "post not found")
+                    )
+
+                    else -> call.respond(
+                        status = when {
+                            result.alreadyLiked -> HttpStatusCode.OK
+                            else -> HttpStatusCode.Created
+                        }, message = result
                     )
                 }
+            }.onFailure {
+                call.respond(
+                    status = HttpStatusCode.InternalServerError,
+                    message = mapOf("error" to "internal server error")
+                )
             }
         }
     }
