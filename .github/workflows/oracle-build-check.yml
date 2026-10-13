@@ -12,11 +12,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        flags: ["--gc=G1 -O3 -march=native", "--gc=G1 -march=native", "-O3 -march=native", "-march=native"]
+        flags:
+          - "-J-Xmx950m -J-XX:ReservedCodeCacheSize=64m -J-XX:MaxMetaspaceSize=384m --gc=G1 -march=native"
+          - "-J-Xmx850m -J-XX:ReservedCodeCacheSize=64m -J-XX:MaxMetaspaceSize=384m --gc=G1 -march=native"
+          - "-J-Xmx950m -J-XX:ReservedCodeCacheSize=64m -J-XX:MaxMetaspaceSize=384m -march=native"
+          - "-J-Xmx950m -J-XX:ReservedCodeCacheSize=48m -J-XX:MaxMetaspaceSize=320m --gc=G1 -march=native"
     steps:
       - uses: actions/checkout@v4
       - name: use matrix flags
-        run: sed -i 's|--gc=G1 -O3 -march=native|${{ matrix.flags }}|' submissions/kotlin-ktor-graalvm-noamm9/build.sh && grep -n "march" submissions/kotlin-ktor-graalvm-noamm9/build.sh
+        run: |
+          F=submissions/kotlin-ktor-graalvm-noamm9/build.sh
+          sed -i 's|-J-Xmx1150m -J-XX:ReservedCodeCacheSize=64m -J-XX:MaxMetaspaceSize=384m|${{ matrix.flags }}|; s|^    --gc=G1 -O3 -march=native||' $F
+          grep -n "native-image" -A2 $F
       - name: install + build in a 1 CPU / 1700 MB / no-swap container
         run: |
           docker run --rm --cpuset-cpus=0 --cpus=1 --memory=1700m --memory-swap=1700m \
