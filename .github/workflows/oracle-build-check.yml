@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: use matrix flags
-        run: sed -i 's|    --gc=G1 -O3 -march=native \|    ${{ matrix.flags }} \|' submissions/kotlin-ktor-graalvm-noamm9/build.sh && grep -n "march" submissions/kotlin-ktor-graalvm-noamm9/build.sh
+        run: sed -i 's|--gc=G1 -O3 -march=native|${{ matrix.flags }}|' submissions/kotlin-ktor-graalvm-noamm9/build.sh && grep -n "march" submissions/kotlin-ktor-graalvm-noamm9/build.sh
       - name: install + build in a 1 CPU / 1700 MB / no-swap container
         run: |
           docker run --rm --cpuset-cpus=0 --cpus=1 --memory=1700m --memory-swap=1700m \
