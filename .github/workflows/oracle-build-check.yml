@@ -1,0 +1,32 @@
+# Temporary: which Oracle GraalVM native-image flags fit a 1 CPU / 1700 MB / no-swap box.
+name: oracle build check
+on:
+  push:
+    branches: [linux-bench]
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        flags: ["--gc=G1 -O3 -march=native", "--gc=G1 -march=native", "-O3 -march=native", "-march=native"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: use matrix flags
+        run: sed -i 's|    --gc=G1 -O3 -march=native \|    ${{ matrix.flags }} \|' submissions/kotlin-ktor-graalvm-noamm9/build.sh && grep -n "march" submissions/kotlin-ktor-graalvm-noamm9/build.sh
+      - name: install + build in a 1 CPU / 1700 MB / no-swap container
+        run: |
+          docker run --rm --cpuset-cpus=0 --cpus=1 --memory=1700m --memory-swap=1700m \
+            -v "$PWD":/repo -w /repo ubuntu:24.04 bash -c '
+            set -uo pipefail
+            apt-get update -qq && apt-get install -y -qq curl >/dev/null
+            bash submissions/kotlin-ktor-graalvm-noamm9/install.sh >/dev/null
+            start=$(date +%s)
+            bash submissions/kotlin-ktor-graalvm-noamm9/build.sh 2>&1 | grep -E "^\[[1-8]/8\]|Garbage collector|Optimization|Target machine|reachable|Finished generating|Peak RSS|total image|out of memory|Error"
+            rc=${PIPESTATUS[0]}
+            echo "build exit $rc after $(( $(date +%s) - start ))s"
+            grep oom_kill /sys/fs/cgroup/memory.events
+            exit $rc'

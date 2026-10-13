@@ -2,7 +2,7 @@
 name: linux bench
 on:
   push:
-    branches: [linux-bench]
+    branches: [linux-bench-run]
 permissions:
   contents: read
 
