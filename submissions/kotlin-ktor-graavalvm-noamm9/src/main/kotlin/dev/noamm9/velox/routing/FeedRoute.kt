@@ -1,9 +1,9 @@
-package dev.syoritohatsuki.tdsck.routing
+package dev.noamm9.velox.routing
 
-import dev.syoritohatsuki.tdsck.plugins.Post
-import dev.syoritohatsuki.tdsck.plugins.getFeed
-import io.ktor.http.*
-import io.ktor.server.response.*
+import dev.noamm9.velox.plugins.Post
+import dev.noamm9.velox.plugins.getFeed
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.response.respond
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 

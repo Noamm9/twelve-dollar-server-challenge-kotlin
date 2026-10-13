@@ -1,15 +1,17 @@
-package dev.syoritohatsuki.tdsck.plugins
+package dev.noamm9.velox.plugins
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.JWTVerificationException
-import dev.syoritohatsuki.tdsck.utils.JWT_SECRET
-import dev.syoritohatsuki.tdsck.utils.positiveIntegerRegex
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.auth.*
-import io.ktor.server.auth.jwt.*
-import io.ktor.server.response.*
+import dev.noamm9.velox.utils.JWT_SECRET
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.Application
+import io.ktor.server.application.install
+import io.ktor.server.auth.Authentication
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.jwt.jwt
+import io.ktor.server.response.respond
 
 fun Application.configureAuthentication() {
     install(Authentication) {
@@ -22,9 +24,7 @@ fun Application.configureAuthentication() {
                 val payload = credential.payload
                 val subject = payload.subject ?: return@validate null
 
-                if (!positiveIntegerRegex.matches(subject)) return@validate null
-                subject.toLongOrNull() ?: return@validate null
-
+                subject.toLongOrNull()?.takeIf { it > 0 } ?: return@validate null
                 payload.getClaim("username").asString() ?: return@validate null
 
                 JWTPrincipal(payload)
@@ -33,7 +33,7 @@ fun Application.configureAuthentication() {
             challenge { _, _ ->
                 val authorization = call.request.headers[HttpHeaders.Authorization]
 
-                if (authorization == null || !authorization.startsWith("Bearer ")) {
+                if (authorization == null || ! authorization.startsWith("Bearer ")) {
                     return@challenge call.respond(
                         status = HttpStatusCode.Unauthorized, message = mapOf("error" to "missing bearer token")
                     )
@@ -46,12 +46,14 @@ fun Application.configureAuthentication() {
                     val username = decoded.getClaim("username").asString()
 
                     when {
-                        subject == null || !positiveIntegerRegex.matches(subject) || subject.toLongOrNull() == null || username == null -> "invalid token payload"
+                        subject == null || subject.toLongOrNull()?.takeIf { it > 0 } == null || username == null -> "invalid token payload"
                         else -> "invalid or expired token"
                     }
-                } catch (_: JWTVerificationException) {
+                }
+                catch (_: JWTVerificationException) {
                     "invalid or expired token"
-                } catch (_: IllegalArgumentException) {
+                }
+                catch (_: IllegalArgumentException) {
                     "invalid or expired token"
                 }
 

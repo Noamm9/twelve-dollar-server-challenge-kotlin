@@ -1,16 +1,15 @@
 @file:Suppress("SqlSourceToSinkFlow", "LoggingSimilarMessage")
 
-package dev.syoritohatsuki.tdsck.plugins
+package dev.noamm9.velox.plugins
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import dev.syoritohatsuki.tdsck.utils.SQLITE_PATH
+import dev.noamm9.velox.utils.SQLITE_PATH
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.sql.ResultSet
-
 
 @Serializable
 data class Post(
@@ -32,7 +31,9 @@ data class CreatedPost(
 
 @Serializable
 data class LikeResult(
-    val liked: Boolean, @SerialName("already_liked") val alreadyLiked: Boolean, @SerialName("post_id") val postId: Int
+    val liked: Boolean,
+    @SerialName("already_liked") val alreadyLiked: Boolean,
+    @SerialName("post_id") val postId: Int
 )
 
 lateinit var sqliteDataSource: HikariDataSource
@@ -53,27 +54,6 @@ fun configureDatabase() {
         validate()
     })
 }
-
-/*   Utils   */
-
-fun ResultSet.dump(): String {
-    val meta = metaData
-    val columns = meta.columnCount
-
-    return buildString {
-        while (next()) {
-            for (i in 1..columns) {
-                if (i > 1) append(", ")
-                append(meta.getColumnLabel(i))
-                append("=")
-                append(getObject(i))
-            }
-            appendLine()
-        }
-    }
-}
-
-/*   Data   */
 
 suspend fun health(): Result<Boolean> = withContext(Dispatchers.IO) {
     runCatching {

@@ -1,8 +1,8 @@
-package dev.syoritohatsuki.tdsck.plugins
+package dev.noamm9.velox.plugins
 
-import dev.syoritohatsuki.tdsck.routing.feedRoute
-import dev.syoritohatsuki.tdsck.routing.healthRoute
-import dev.syoritohatsuki.tdsck.routing.postsRoute
+import dev.noamm9.velox.routing.feedRoute
+import dev.noamm9.velox.routing.healthRoute
+import dev.noamm9.velox.routing.postsRoute
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*

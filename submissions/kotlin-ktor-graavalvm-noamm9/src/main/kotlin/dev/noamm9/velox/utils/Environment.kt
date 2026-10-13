@@ -1,4 +1,4 @@
-package dev.syoritohatsuki.tdsck.utils
+package dev.noamm9.velox.utils
 
 import io.github.cdimascio.dotenv.dotenv
 import kotlin.properties.ReadOnlyProperty

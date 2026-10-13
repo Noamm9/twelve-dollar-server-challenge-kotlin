@@ -17,5 +17,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "tdsck"
+rootProject.name = "velox"
 

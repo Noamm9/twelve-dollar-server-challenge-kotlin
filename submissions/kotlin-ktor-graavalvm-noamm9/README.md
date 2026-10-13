@@ -1,9 +1,9 @@
-# Kotlin + Ktor JVM
+# Kotlin + Ktor GraalVM
 
 |                     |                                                                                                                                                           |
 |---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Language            | Kotlin 2.4.0                                                                                                                                              |
-| Runtime             | JVM 17                                                                                                                                                    |
+| Runtime             | GraalVM CE 25.4.4.1.1 native image                                                                                                                        |
 | Framework           | Ktor 3.6.0                                                                                                                                                |
 | Server              | Ktor CIO                                                                                                                                                  |
 | SQLite driver       | xerial sqlite-jdbc 3.53.4.0                                                                                                                               |
@@ -39,17 +39,18 @@ Defaults are provided only for local development.
 
 ## Build output
 
-`build.sh` uses Gradle's `installDist` task. `start.sh` then runs the generated application script in the foreground:
+`install.sh` installs GraalVM CE into `/opt/graalvm`, and `build.sh` uses it for Gradle's `nativeCompile` task. `start.sh` then runs the native binary in the foreground:
 
 ```bash
-bash build/install/tdsck/bin/tdsck
+build/native/nativeCompile/velox
 ```
 
-This avoids depending on a plain `build/libs/*.jar`, which may not contain all runtime dependencies.
+Reflection used by Hikari, logback, java-jwt (Jackson) and kotlinx.serialization is registered in `src/main/resources/META-INF/native-image/dev.noamm9.velox/velox/reachability-metadata.json`, generated with the GraalVM tracing agent while running `test/test.sh`. A new `@Serializable` response class needs its `Companion` field and `Companion.serializer()` added there.
 
 ## Optimizations, and why
 
 - **Direct mode preferred.** The app can bind to `0.0.0.0:80` when the benchmark environment provides the required capability. This avoids spending CPU on Nginx on a one-vCPU machine. For development, `PORT=3000` can be used to avoid privileged-port binding issues.
+- **GraalVM native image.** No JIT warm-up and a much smaller memory footprint than the JVM, which leaves more of the 2 GB for SQLite's page cache and connections.
 - **Ktor CIO.** CIO is a coroutine-based HTTP engine and keeps the stack simple without an external servlet container.
 - **SQLite through JDBC with HikariCP.** Connections are reused instead of opening a new SQLite connection from scratch for every request.
 - **SQLite pragmas set on connections.** The app enables WAL mode, `synchronous=NORMAL`, a busy timeout, mmap, a larger page cache, and in-memory temporary storage. WAL plus `synchronous=NORMAL` keeps writes durable enough for the challenge rules while improving read/write behavior.

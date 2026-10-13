@@ -1,13 +1,14 @@
-package dev.syoritohatsuki.tdsck.routing
+package dev.noamm9.velox.routing
 
-import dev.syoritohatsuki.tdsck.plugins.health
-import io.ktor.http.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import dev.noamm9.velox.plugins.health
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-val UPTIME = System.currentTimeMillis()
+val START_TIME = System.currentTimeMillis()
 
 @Serializable
 data class Health(
@@ -22,13 +23,17 @@ fun Route.healthRoute() {
         health().onSuccess {
             call.respond(
                 HttpStatusCode.OK, Health(
-                    status = "ok", db = "ok", uptimeSeconds = (System.currentTimeMillis() - UPTIME) / 1000
+                    status = "ok",
+                    db = "ok",
+                    uptimeSeconds = (System.currentTimeMillis() - START_TIME) / 1000
                 )
             )
         }.onFailure {
             call.respond(
                 HttpStatusCode.ServiceUnavailable, Health(
-                    status = "degraded", db = "unreachable", error = it.localizedMessage
+                    status = "degraded",
+                    db = "unreachable",
+                    error = it.localizedMessage
                 )
             )
         }

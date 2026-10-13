@@ -1,8 +1,8 @@
-package dev.syoritohatsuki.tdsck
+package dev.noamm9.velox
 
-import dev.syoritohatsuki.tdsck.plugins.*
-import dev.syoritohatsuki.tdsck.utils.HOST
-import dev.syoritohatsuki.tdsck.utils.PORT
+import dev.noamm9.velox.plugins.*
+import dev.noamm9.velox.utils.HOST
+import dev.noamm9.velox.utils.PORT
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 

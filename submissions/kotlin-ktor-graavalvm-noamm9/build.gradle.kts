@@ -3,17 +3,25 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(ktorLibs.plugins.ktor)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.graalvm.native)
 }
 
-group = "dev.syorito-hatsuki"
+group = "dev.noamm9.velox"
 version = "2026.10.1"
 
 application {
-    mainClass = "dev.syoritohatsuki.tdsck.MainKt"
+    mainClass = "dev.noamm9.velox.MainKt"
 }
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(25)
+}
+
+graalvmNative {
+    binaries.named("main") {
+        imageName.set(rootProject.name)
+        mainClass.set(application.mainClass)
+    }
 }
 dependencies {
     implementation(ktorLibs.serialization.kotlinx.json)
