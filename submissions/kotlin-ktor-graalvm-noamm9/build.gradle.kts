@@ -21,6 +21,7 @@ graalvmNative {
     binaries.named("main") {
         imageName.set(rootProject.name)
         mainClass.set(application.mainClass)
+        buildArgs.add("-J-Xmx1100m")
     }
 }
 dependencies {

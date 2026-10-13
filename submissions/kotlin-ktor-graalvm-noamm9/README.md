@@ -23,7 +23,7 @@ SQLITE_PATH=... JWT_SECRET=.. HOST=0.0.0.0 PORT=80 bash start.sh
 
 For local development, use a non-privileged port:
 ```bash
-bash SQLITE_PATH=... JWT_SECRET=... HOST=127.0.0.1 PORT=3000 bash start.sh
+SQLITE_PATH=... JWT_SECRET=... HOST=127.0.0.1 PORT=3000 bash start.sh
 ```
 
 The server reads all runtime configuration from the challenge environment variables:
@@ -59,6 +59,10 @@ Reflection used by logback and kotlinx.serialization is registered in `src/main/
 - **Hand-rolled HS256 JWT verification.** Signature (constant-time compare), `alg`, `exp`, `nbf` and `iat` are checked with `javax.crypto` and kotlinx.serialization instead of java-jwt, which removes Jackson and the Ktor auth plugins. Every token is verified on every request; nothing is cached.
 - **INFO-level logging.** `logback.xml` keeps logback from defaulting to DEBUG, so nothing is logged per request.
 - **Compact JSON via kotlinx.serialization.** Response objects are serialized by Ktor content negotiation with stable field order from the Kotlin serializable models.
+
+## Credits
+
+Based on [syorito-hatsuki's Kotlin + Ktor JVM submission](https://github.com/arjaythedev/twelve-dollar-server-challenge/pull/36) (routes, SQL and README structure), ported to a GraalVM native image with its own connection pool and JWT verification.
 
 ## License
 
