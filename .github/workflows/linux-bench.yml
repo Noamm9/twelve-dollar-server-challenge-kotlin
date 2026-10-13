@@ -1,0 +1,31 @@
+# Temporary: native vs JVM limit search on Linux, server pinned to 1 CPU / 2 GB like the benchmark droplet.
+name: linux bench
+on:
+  push:
+    branches: [linux-bench]
+permissions:
+  contents: read
+
+jobs:
+  bench:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - name: seed
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq sqlite3 && bash seed/make-seed.sh
+      - name: build both runtimes with install.sh + build.sh in ubuntu:24.04
+        run: |
+          docker run --name build -v "$PWD":/repo -w /repo ubuntu:24.04 bash -c '
+            set -euo pipefail
+            apt-get update -qq && apt-get install -y -qq curl >/dev/null
+            bash submissions/kotlin-ktor-graalvm-noamm9/install.sh >/dev/null
+            bash submissions/kotlin-ktor-graalvm-noamm9/build.sh 2>&1 | grep -E "Finished generating|Peak RSS|BUILD"'
+          docker commit build box >/dev/null
+          ls -la submissions/kotlin-ktor-graalvm-noamm9/build/native/nativeCompile submissions/kotlin-ktor-graalvm-noamm9/build/install/velox/lib | head -5
+      - name: k6
+        run: curl -fsSL https://github.com/grafana/k6/releases/download/v2.3.0/k6-v2.3.0-linux-amd64.tar.gz | sudo tar -xz -C /usr/local/bin --strip-components=1 && k6 version
+      - name: native
+        run: bash .github/bench/limit.sh native /repo/submissions/kotlin-ktor-graalvm-noamm9/build/native/nativeCompile/velox
+      - name: jvm
+        run: bash .github/bench/limit.sh jvm /opt/graalvm/bin/java --enable-native-access=ALL-UNNAMED -cp "/repo/submissions/kotlin-ktor-graalvm-noamm9/build/install/velox/lib/*" dev.noamm9.velox.MainKt
